@@ -1,0 +1,65 @@
+{
+    "launchTime": 1570632332,
+    "gasLimit": 10000000,
+    "extraData": "CustomChain",
+    "accounts": [
+        {
+            "address": "0x5e4abda5cced44f70c9d2e1be4fda08c4291945b",
+            "balance": 25000000000000000000000000
+        },
+        {
+            "address": "0xcb43d5d874893a67d94cdb0c28e2a93285f56ff0",
+            "balance": 0,
+            "energy": 10000000000000000000000000
+        },
+        {
+            "address": "0x7d350a72ea46d0927139e57dfe2174d7acaa9d30",
+            "balance": 0,
+            "energy": 10000000000000000000000000
+        },
+        {
+            "address": "0x62fa853cefc28aca2c225e66da96a692171d86e7",
+            "balance": 0,
+            "energy": 10000000000000000000000000
+        }
+    ],
+    "authority": [
+        {
+            "masterAddress": "0x929710d206f0e1133f353553353de5bc80c8460b",
+            "endorsorAddress": "0x5e4abda5cced44f70c9d2e1be4fda08c4291945b",
+            "identity": "0x000000000000000000000000000000000000000000006d61737465724e6f6465"
+        },
+        {
+            "masterAddress": "0xaf05f933692569a710c2f6fa323a59e20068d418",
+            "endorsorAddress": "0x5e4abda5cced44f70c9d2e1be4fda08c4291945b",
+            "identity": "0x000000000000000000000000000000000000000000006d61737465724e6f6465"
+        },
+        {
+            "masterAddress": "0x7bd72c20b67b7145a85eb2705913eeb980635a64",
+            "endorsorAddress": "0x5e4abda5cced44f70c9d2e1be4fda08c4291945b",
+            "identity": "0x000000000000000000000000000000000000000000006d61737465724e6f6465"
+        }
+    ],
+    "params": {
+        "rewardRatio": 300000000000000000,
+        "baseGasPrice": 1000000000000000,
+        "proposerEndorsement": 25000000000000000000000000,
+        "executorAddress": "0x0000000000000000000000004578656375746f72"
+    },
+    "executor": {
+        "approvers": [
+            {
+                "address": "0xcb43d5d874893a67d94cdb0c28e2a93285f56ff0",
+                "identity": "0x000000000000000000000000000000000000000000000000617070726f766572"
+            },
+            {
+                "address": "0x7d350a72ea46d0927139e57dfe2174d7acaa9d30",
+                "identity": "0x000000000000000000000000000000000000000000000000617070726f766572"
+            },
+            {
+                "address": "0x62fa853cefc28aca2c225e66da96a692171d86e7",
+                "identity": "0x000000000000000000000000000000000000000000000000617070726f766572"
+            }
+        ]
+    }
+}
