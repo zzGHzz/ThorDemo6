@@ -19,9 +19,9 @@ for (let addr of masterNodes) {
  * Set network global parameters
  */
 const _params: Params = {
-    rewardRatio: 300000000000000000,
-    baseGasPrice: 1000000000000000,
-    proposerEndorsement: 25000000000000000000000000,
+    rewardRatio: 3e17,
+    baseGasPrice: 1e15,
+    proposerEndorsement: 2.5e25,
     executorAddress: strToHexStr('Executor', 40)
 }
 
@@ -31,13 +31,13 @@ const _params: Params = {
 let _accounts: Account[] = [
     {
         address: endorsor,
-        balance: 25000000000000000000000000
+        balance: 2.5e25
     }
 ];
 for (let addr of approvers) {
     _accounts.push({
         address: addr,
-        balance: 0,
+        balance: 1e18,
         energy: 1e25
     })
 }

@@ -1,7 +1,7 @@
-# ThorDemo6 - On-chain governance demo1
+# Demo of VeChainThor On-chain Governance - Adding a New Validator
 
-Demo1 runs on a customized VeChainThor with 3 validators. The objective is to execute the result of an off-chain vote by the validators to add a new validator. The demo is to show step by step the on-chain operations required to achieve the objective.
+This demo runs on a customized VeChainThor with 3 approvers. The objective is to execute the result of an off-chain vote by the approvers to add a new validator. The demo is to show step by step the required on-chain operations.
  
-1. One of the validators registers a proposal which defines the operation to change the base gas price in the built-in Executor contract.
-2. All validators votes in the contract to decide whether to carry out the operation.
-3. One of the validators executes the proposal.
+1. The first approver registers a proposal which defines the operation of adding a new validator.
+2. Tne first two approvers votes for the proposal to reach the required majority.
+3. The third approver executes the proposal. Note that anyone can execute a proposal which has been approved.

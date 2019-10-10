@@ -1,9 +1,15 @@
 /// <reference types="@vechain/connex" />
 
 import { abi } from 'thor-devkit';
-import { isByte32, toAndThrow, isAddress } from './utils';
+import { isByte32 } from './utils';
 import { to } from 'await-to-js';
 
+/**
+ * Decode EVENT data (output by RECEIPT)
+ * 
+ * @param output
+ * @param abiObj 
+ */
 function decodeEvent(output: Connex.Thor.Event, abiObj: object): abi.Decoded {
     const event = new abi.Event({
         type: "event",
@@ -15,6 +21,12 @@ function decodeEvent(output: Connex.Thor.Event, abiObj: object): abi.Decoded {
     return event.decode(output.data, output.topics);
 }
 
+/**
+ * Encode ABI 
+ * 
+ * @param abiObj 
+ * @param params 
+ */
 function encodeABI(abiObj: object, ...params: any[]): string {
     const fn = new abi.Function({
         constant: abiObj["constant"],
@@ -25,9 +37,16 @@ function encodeABI(abiObj: object, ...params: any[]): string {
         stateMutability: abiObj["stateMutability"],
         type: "function"
     });
-    return fn.encode(params);
+    return fn.encode(...params);
 }
 
+/**
+ * Try to get RECEIPT within a certain amount of time (in blocks) 
+ * 
+ * @param connex 
+ * @param txid 
+ * @param nblock - maximal number of blocks
+ */
 async function getReceipt(connex: Connex, txid: string, nblock: number): Promise<Connex.Thor.Receipt> {
     if (!isByte32(txid)) { throw "Invalid txid!"; }
 
@@ -37,7 +56,7 @@ async function getReceipt(connex: Connex, txid: string, nblock: number): Promise
     let receipt: Connex.Thor.Receipt, err: Error;
 
     for (let i = 0; i < n; i++) {
-        await toAndThrow(ticker.next());
+        await ticker.next();
 
         [err, receipt] = await to(connex.thor.transaction(txid).getReceipt());
         if (err) { continue; }
