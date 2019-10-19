@@ -1,13 +1,10 @@
 import { Framework } from '@vechain/connex-framework';
 import { Driver, SimpleNet, SimpleWallet } from '@vechain/connex.driver-nodejs';
-import { to } from 'await-to-js';
 
-import { Authority, authorityAddr, Executor, getABI } from './src/built-in';
+import { authorityAddr, getBuiltinABI } from './src/built-in';
 import { approvers, endorsor, sks } from './src/settings';
 import { strToHexStr } from './src/utils';
-import { decodeEvent, encodeABI, getReceipt } from './src/connexUtils';
-
-const validator = '0x1bcb328e455d15b4bf75cab5f5c459954b032b4a';
+import { decodeEvent, getReceipt, contractCall, contractCallWithTx, encodeABI } from './src/connexUtils';
 
 (async () => {
     const net = new SimpleNet("http://localhost:8669");
@@ -19,130 +16,97 @@ const validator = '0x1bcb328e455d15b4bf75cab5f5c459954b032b4a';
         wallet.import(sks[i]);
     }
 
-    const authority = new Authority(connex);
-    const executorAddr = await authority.executor();
-    const executor = new Executor(connex, executorAddr);
+    const executorAddr = (await contractCall(
+        connex, authorityAddr, getBuiltinABI('authority', 'executor', 'function')
+    )).decoded['0'];
 
-    let txResponse: Connex.Vendor.TxResponse;
+    const timeout = 5;
+    const validator = '2a49980921dd25babbee592a685a54cb75acea35';
 
-    // Propose
-    console.log("PROPOSE")
-    txResponse = await propose(executor);
-    console.log("TXID: " + txResponse.txid + "\n");
+    console.log("0. Check existence of new validator")
+    await checkValidatorStatus(connex, validator);
 
-    // Get proposalID
-    const proposalID = await getProposalID(connex, txResponse.txid, 5);
+    console.log("I. Propose proposoal of adding validator " + validator);
+    const proposalID = await propose(connex, timeout, approvers[0], executorAddr, validator);
 
-    // Approve proposal
-    console.log('APPROVE');
-    await approve(executor, proposalID);
+    console.log('II. Approve proposal');
+    await approve(connex, timeout, executorAddr, proposalID);
 
-    // Execute proposal
-    console.log('EXECUTE');
-    txResponse = await execute(executor, proposalID);
-    console.log('txid: ' + txResponse.txid);
+    console.log('III. Execute proposal');
+    await execute(connex, timeout, approvers[1], executorAddr, proposalID);
 
-    // Check
-    console.log('CHECK');
-    console.log('Calling Autority.get(_nodeMaster)');
-    console.log(await check(connex, 5));
+    console.log('IV. Check new validator status');
+    await checkValidatorStatus(connex, validator);
 
     driver.close();
 })().catch(err => console.log(err));
 
-/**
- * Make a proposal on adding a new validator.
- * 
- * @param executor
- * 
- * Proposer:  0xcb43d5d874893a67d94cdb0c28e2a93285f56ff0
- * Validator: 0x1bcb328e455d15b4bf75cab5f5c459954b032b4a
- * Endorsor:  0x5e4abda5cced44f70c9d2e1be4fda08c4291945b
- */
-async function propose(executor: Executor): Promise<Connex.Vendor.TxResponse> {
-    // Encoding
-    const abiObj = getABI('authority', 'add', 'function');
-    const data = encodeABI(abiObj, validator, endorsor, strToHexStr('NewValidator', 64));
+async function propose(
+    connex: Connex, timeout: number, txSender: string, executorAddr: string, validator: string
+): Promise<string> {
+    const txResponse = await contractCallWithTx(
+        connex, txSender, 300000,
+        executorAddr, 0, getBuiltinABI('executor', 'propose', 'function'),
+        authorityAddr, encodeABI(
+            getBuiltinABI('authority', 'add', 'function'), validator, endorsor, strToHexStr('New Validator', 64)
+        )
+    );
+    console.log('\tTx Sender: ' + txSender);
+    console.log('\ttxid: ' + txResponse.txid);
+    const proposalID = await getProposalID(connex, timeout, txResponse.txid);
+    console.log('\tproposalID: ' + proposalID);
 
-    // Assign signer and gas limit
-    executor.signer(approvers[0]).gas(300000);
-
-    // Propose
-    const txResponse = await executor.propose(authorityAddr, data);
-
-    return new Promise<Connex.Vendor.TxResponse>((resolve, _) => { resolve(txResponse); });
+    return proposalID;
 }
 
-async function getProposalID(connex: Connex, txid: string, nblock: number): Promise<string> {
-    const receipt = await getReceipt(connex, txid, nblock);
-    const decoded = decodeEvent(receipt.outputs[0].events[0], getABI('executor', 'proposal', 'event'));
-    return new Promise((resolve, _) => { resolve(decoded["proposalID"]); });
+async function getProposalID(connex: Connex, timeout: number, txid: string): Promise<string> {
+    const receipt = await getReceipt(connex, timeout, txid);
+    const decoded = decodeEvent(
+        receipt.outputs[0].events[0],
+        getBuiltinABI('executor', 'proposal', 'event')
+    );
+    return decoded["proposalID"];
 }
 
-/**
- * Approve the submitted proposal.
- * 
- * @param executor 
- * @param proposalID 
- * 
- * Approvers
- * approvers[0]: 0xcb43d5d874893a67d94cdb0c28e2a93285f56ff0
- * approvers[1]: 0x7d350a72ea46d0927139e57dfe2174d7acaa9d30
- */
-async function approve(executor: Executor, proposalID: string): Promise<void> {
-    try {
-        let txResponse: Connex.Vendor.TxResponse;
-
-        executor.signer(approvers[0]).gas(300000);
-        txResponse = await executor.approve(proposalID);
-        console.log('txid: ' + txResponse.txid);
-
-        executor.signer(approvers[1]).gas(300000);
-        txResponse = await executor.approve(proposalID);
-        console.log('txid: ' + txResponse.txid);
-    } catch (err) { throw err; }
+async function approve(
+    connex: Connex, timeout: number, executorAddr: string, proposalID: string
+) {
+    const txids: string[] = [];
+    for (let approver of approvers) {
+        console.log('\tApprover: ' + approver);
+        const txResponse = await contractCallWithTx(
+            connex, approver, 300000, executorAddr, 0, getBuiltinABI('executor', 'approve', 'function'), proposalID
+        );
+        console.log('\ttxid: ' + txResponse.txid);
+        txids.push(txResponse.txid);
+    }
+    for (let id of txids) { await getReceipt(connex, timeout, id); }    // Confirm TXs
 }
 
-/**
- * Execute the approved proposal.
- * 
- * @param executor 
- * @param proposalID 
- * 
- * Executed by 
- * approvers[2]: 0x62fa853cefc28aca2c225e66da96a692171d86e7
- */
-async function execute(executor: Executor, proposalID: string): Promise<Connex.Vendor.TxResponse> {
-    executor.signer(approvers[2]).gas(200000);
-    return executor.execute(proposalID);
+async function execute(
+    connex: Connex, timeout: number, txSender: string, executorAddr: string, proposalID: string
+) {
+    console.log("\tTX Sender: " + txSender);
+    const txResponse = await contractCallWithTx(
+        connex, txSender, 500000, executorAddr, 0, getBuiltinABI('executor', 'execute', 'function'), proposalID
+    );
+    console.log('\ttxid: ' + txResponse.txid);
+    await getReceipt(connex, timeout, txResponse.txid);
 }
 
-/**
- * Check the status of the new validator within a certain amount of time (in blocks)
- * to show that it has been added into the validator list.
- * 
- * It is conducted through calling function `get` of the built-in contract `Authority`. 
- * 
- * @param connex 
- * @param nblock 
- */
-async function check(connex: Connex, nblock: number): Promise<Connex.Thor.Decoded> {
-    const ticker = connex.thor.ticker();
-    const n = nblock >= 1 ? Math.floor(nblock) : 1;
-    const abiObj = getABI('authority', 'get', 'function');
-    const method = connex.thor.account(authorityAddr).method(abiObj);
+async function checkValidatorStatus(connex: Connex, validator: string) {
+    console.log('\taddress: ' + validator);
+    const decoded = (await contractCall(
+        connex, authorityAddr, getBuiltinABI('authority', 'get', 'function'), validator
+    )).decoded;
 
-    let err: Error, out: Connex.Thor.VMOutput;
-    for (let i = 0; i < n; i++) {
-        await ticker.next();
-
-        console.log('Round ' + (i + 1));
-        [err, out] = await to(method.call(validator));
-        if (err) { continue; }
-        if (!out.decoded.listed) { continue; }
-
-        return new Promise((resolve, _) => { resolve(out.decoded); });
+    const names = ['listed', 'endorsor', 'identity', 'active'];
+    for (let i = 0; i < 4; i++) {
+        console.log('\t' + names[i] + ': ' + decoded['' + i]);
     }
 
-    throw new Error("New validator not found!");
+    // for (let [key, _] of Object.entries(decoded)) {
+    //     if (!/^\d+&/.test(key)) { continue; }
+    //     console.log('\t' + key + ': ' + decoded[key])
+    // }
 }

@@ -1,8 +1,7 @@
 /// <reference types="@vechain/connex" />
 /// <reference types="thor-devkit/dist/abi"/>
 
-import { strToHexStr, isAddress, isByte32 } from "./utils";
-import { to } from 'await-to-js';
+import { strToHexStr, getABI } from "./utils";
 
 // Built-in contract addresses
 const authorityAddr = strToHexStr("Authority", 40);
@@ -29,7 +28,7 @@ const prototypeABI = JSON.parse('[{"constant":false,"inputs":[{"name":"_self","t
  * @param name      - function/event name
  * @param type      - 'function' or 'event'
  */
-function getABI(contract: string, name: string, type: 'function' | 'event'): object {
+function getBuiltinABI(contract: string, name: string, type: 'function' | 'event'): object {
     let abi: object[] = [];
     switch (contract.toLowerCase()) {
         case "prototype": { abi = prototypeABI; break; }
@@ -42,148 +41,16 @@ function getABI(contract: string, name: string, type: 'function' | 'event'): obj
         default: { return {}; }
     }
 
-    const lname: string = name.toLowerCase();
-    for (let fabi of abi) {
-        const _name: string = fabi['name'];
-        const _type: string = fabi['type'];
-
-        if (type === _type && _name.toLowerCase() === lname) { return fabi; }
-    }
-
-    return {};
-}
-
-/**
- * A wrapper of built-in contract Authority.
- */
-class Authority {
-    connex: Connex;
-    addr: string;
-
-    constructor(_connex: Connex) {
-        this.connex = _connex;
-        this.addr = authorityAddr;
-    }
-
-    // Get Executor contract address
-    public async executor(): Promise<string> {
-        const abi = getABI('authority', 'executor', 'function');
-        if (abi == {}) { throw new Error('ABI not found'); }
-
-        const method = this.connex.thor.account(this.addr).method(abi);
-
-        let err: Error, output: Connex.Thor.VMOutput;
-        [err, output] = await to(method.call());
-        if (err) { throw err; }
-
-        return new Promise((resolve, reject) => {
-            if (output.vmError == "") {
-                resolve(output.decoded['0']);
-            } else {
-                reject(output.vmError);
-            }
-        });
-    }
-
-    // Check the status of a validator.
-    public async get(_nodeMaster: string): Promise<Connex.Thor.Decoded> {
-        const abi = getABI('authority', 'get', 'function');
-        if (abi == {}) { throw new Error('ABI not found'); }
-
-        const method = this.connex.thor.account(this.addr).method(abi);
-
-        let err: Error, output: Connex.Thor.VMOutput;
-        [err, output] = await to(method.call());
-        if (err) { throw err; }
-
-        return new Promise((resolve, reject) => {
-            if (output.vmError == "") {
-                resolve(output.decoded);
-            } else {
-                reject(output.vmError);
-            }
-        });
-    }
-}
-
-/**
- * A wrapper of built-in contract Executor
- */
-class Executor {
-    private connex: Connex;
-    private addr: string;
-    private signingService: Connex.Vendor.SigningService<'tx'>;
-
-    constructor(_connex: Connex, _addr: string) {
-        if (!isAddress(_addr)) { throw new Error("Invalid address"); }
-
-        this.connex = _connex;
-        this.addr = _addr;
-        this.signingService = _connex.vendor.sign('tx');
-    }
-
-    // Assign signer
-    public signer(addr: string): Executor {
-        if (!isAddress(addr)) { throw new Error("Invalid address!"); }
-
-        this.signingService.signer(addr);
-        return this;
-    }
-
-    // Assign max gas amount
-    public gas(gas: number): Executor {
-        const g = Math.floor(Math.abs(gas));
-        this.signingService.gas(g);
-        return this;
-    }
-
-    // Propose a proposal
-    public propose(_target: string, _data: string): Promise<Connex.Vendor.TxResponse> {
-        if (!isAddress(_target)) { throw new Error("Invalid adress"); }
-
-        const abi = getABI('executor', 'propose', 'function');
-        if (abi == {}) { throw new Error("ABI not found"); }
-
-        return this.sendTX(abi, _target, _data);
-    }
-
-    // Approve a proposal
-    public approve(_proposalID: string) {
-        if (!isByte32(_proposalID)) { throw new Error("Invalid proposalID"); }
-
-        const abi = getABI('executor', 'approve', 'function');
-        if (abi == {}) { throw new Error("ABI not found"); }
-
-        return this.sendTX(abi, _proposalID);
-    }
-
-    // Execute an proposal 
-    public execute(_proposalID: string): Promise<Connex.Vendor.TxResponse> {
-        if (!isByte32(_proposalID)) { throw new Error("Invalid proposalID"); }
-
-        const abi = getABI('executor', 'execute', 'function');
-        if (abi == {}) { throw new Error("ABI not found"); }
-
-        return this.sendTX(abi, _proposalID);
-    }
-
-    private sendTX(abi: object, ...data: any[]): Promise<Connex.Vendor.TxResponse> {
-        const method = this.connex.thor.account(this.addr).method(abi);
-        const clause = method.asClause(...data);
-
-        return this.signingService.request([{
-            ...clause
-        }])
-    }
+    return getABI(abi, name, type);
 }
 
 export {
-    authorityABI, authorityAddr, Authority,
+    authorityABI, authorityAddr,
     energyABI, energyAddr,
     paramsABI, paramsAddr,
-    extensionABI, extensionAddr, Executor,
+    extensionABI, extensionAddr,
     extensionV2ABI, extensionV2Addr,
     executorABI, executorAddr,
     prototypeABI, prototypeAddr,
-    getABI
+    getBuiltinABI
 }

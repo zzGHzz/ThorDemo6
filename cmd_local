@@ -1,0 +1,11 @@
+# node1
+thor master-key --config-dir <dir_node1>
+thor --network ./customChainConfig.json --config-dir <dir_node1> --data-dir <dir_node1>
+
+# node2
+thor master-key --config-dir <dir_node2>
+thor --network ./customChainConfig.json --config-dir <dir_node2> --data-dir <dir_node2> --api-addr localhost:8670 --p2p-port 11236 --bootnode <enode_node1>@127.0.0.1:11235
+
+# node3
+thor master-key --config-dir <dir_node3>
+thor --network ./customChainConfig.json --config-dir <dir_node3> --data-dir <dir_node3> --api-addr localhost:8671 --p2p-port 11237 --bootnode <enode_node1>@127.0.0.1:11235
