@@ -1,22 +1,27 @@
 # Demo of VeChainThor On-chain Governance - Authorizing a New Validator
 
-This demo simulates the on-chain goverance that authorizes a new consensus validator (or authority masternode). The process consists of three steps: decision making, authorization and executation. The first step is assumed to be carried out off-chain by members of the governing body and the second two step conducted on-chain using the deployed built-in contract `Executor`. 
+This demo simulates the on-chain goverance that authorizes a new consensus validator (or authority masternode). The process consists of three steps: decision making, authorization and executation. The first step is assumed to be carried out off-chain by members of the governing body and the second two steps conducted on-chain via the deployed built-in contract `Executor`. 
 
-The demo shows step by step how to do the required on-chain operations:
+The demo shows step by step how to do the required on-chain operations (functions that implement the operations are shown in brackets):
  
-1. To propose a proposal of authorizing a new validator;
-2. To approve the proposal (by members of the governing body);
-3. To execute the proposal.
+1. To propose a proposal of authorizing a new validator (`propose`);
+2. To approve the proposal (`approve`);
+3. To execute the proposal (`execute`).
 
 ## Terminology in Code
 
 * `approver` / `approvers` - member(s) of the governing body;
 * `authority` - built-in contract `Authority` that manages the list of validators;
-* `executor` - built-in contact `Executor`;
+* `executor` - built-in contact `Executor`.
 
 ## Prerequisites
 
-This demo should be run on a customized version of VeChainThor. The definition of the network can be found in `./customChainConfig.json`. Related Thor-node commands can be found in `./cmd_local`.
+This demo should be run on a customized version of VeChainThor. The definition of the network can be found in `./customChainConfig.json`. Related Thor-node commands can be found in `./nodeLaunchCmd`.
+
+YOU MUST REPLACE all the `authorityAddress` with the master addresses of the Thor node launched by you to make the demo work. The master address can be obtained by command:
+```
+thor master-key --config-dir <KEY_DIR>
+```
 
 Please refer to my previous article ['What you might not know about VeChainThor yet (Part V) - Customizing Your Own VeChainThor'](https://medium.com/@ziheng.zhou/what-you-might-not-know-about-vechainthor-yet-part-v-customizing-your-own-vechainthor-dd40a7667452) for details. 
 
