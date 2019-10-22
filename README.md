@@ -1,6 +1,6 @@
 # Demo of VeChainThor On-chain Governance - Authorizing a New Validator
 
-This demo simulates the on-chain goverance that authorizes a new consensus validator (or authority masternode). The process consists of three steps: decision making, authorization and executation. The first step is assumed to be carried out off-chain by members of the governing body and the second two step conducted on-chain using the deployed built-in contract `Executor`. 
+This demo simulates the on-chain governance that authorizes a new consensus validator (i.e., authority masternode). The process consists of three steps: decision making, authorization and execution. The first step is assumed to be carried out off-chain by members of the governing body and the second two step conducted on-chain using the deployed built-in contract `Executor`.
 
 The demo shows step by step how to do the required on-chain operations:
  
