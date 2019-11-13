@@ -21,7 +21,7 @@ import { decodeEvent, getReceipt, contractCall, contractCallWithTx, encodeABI } 
     )).decoded['0'];
 
     const timeout = 5;
-    const validator = '2a49980921dd25babbee592a685a54cb75acea35';
+    const validator = '0x2a49980921dd25babbee592a685a54cb75acea35';
 
     console.log("0. Check existence of new validator")
     await checkValidatorStatus(connex, validator);
