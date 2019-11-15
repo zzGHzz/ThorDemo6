@@ -1,10 +1,10 @@
 import { Framework } from '@vechain/connex-framework';
 import { Driver, SimpleNet, SimpleWallet } from '@vechain/connex.driver-nodejs';
 
-import { authorityAddr, getBuiltinABI } from './src/built-in';
+import { authorityAddr, getBuiltinABI } from 'myvetools/dist/builtin';
 import { approvers, endorsor, sks } from './src/settings';
-import { strToHexStr } from './src/utils';
-import { decodeEvent, getReceipt, contractCall, contractCallWithTx, encodeABI } from './src/connexUtils';
+import { strToHexStr } from 'myvetools/dist/utils';
+import { decodeEvent, getReceipt, contractCall, contractCallWithTx, encodeABI } from 'myvetools/dist/connexutils';
 
 (async () => {
     const net = new SimpleNet("http://localhost:8669");
